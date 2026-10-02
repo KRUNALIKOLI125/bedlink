@@ -102,4 +102,20 @@ app.post("/api/requests/:id/arrived", (req, res) => {
   });
 });
 
+app.get("/api/metrics", (req, res) => {
+  const held = requests.filter((r) => r.acceptedAt);
+  const avg = (a) =>
+    a.length ? Math.round((a.reduce((s, x) => s + x, 0) / a.length) * 10) / 10 : 0;
+
+  res.json({
+    totalRequests: requests.length,
+    bedsHeld: held.length,
+    noHospital: requests.filter((r) => r.status === "NO_HOSPITAL").length,
+    avgSecondsToAccept: avg(held.map((r) => (r.acceptedAt - r.createdAt) / 1000)),
+    avgOffersPerRequest: avg(held.map((r) => r.nextIndex)),
+    avgMinutesSavedVsNearest: avg(held.map((r) => r.wastedAvoidedMin)),
+    totalMinutesSaved: held.reduce((s, r) => s + r.wastedAvoidedMin, 0),
+  });
+});
+
 server.listen(4000, () => console.log("BedLink API running on port 4000"));

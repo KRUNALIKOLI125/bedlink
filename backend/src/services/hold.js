@@ -1,5 +1,5 @@
 import { hospitals } from "../data/mock.js";
-import { rankHospitals } from "./ranking.js";
+import { rankHospitals, distanceKm } from "./ranking.js";
 
 export const requests = [];
 const OFFER_SECONDS = 120; // change to 120 later
@@ -46,6 +46,21 @@ export function respond(io, requestId, accept) {
 
   clearTimeout(request.timer);
   if (accept) {
+    // --- NEW BLOCK STARTS HERE ---
+    const byDistance = [...hospitals].sort(
+      (a, b) =>
+        distanceKm(request.lat, request.lng, a.lat, a.lng) -
+        distanceKm(request.lat, request.lng, b.lat, b.lng)
+    );
+    let wasted = 0;
+    for (const x of byDistance) {
+      if (request.needs.every((n) => (x.beds[n] || 0) > 0)) break;
+      wasted += (distanceKm(request.lat, request.lng, x.lat, x.lng) / 30) * 60;
+    }
+    request.wastedAvoidedMin = Math.round(wasted);
+    request.acceptedAt = Date.now();
+    // --- NEW BLOCK ENDS HERE ---
+
     const h = hospitals.find((x) => x.id === request.offer.hospitalId);
     request.needs.forEach((n) => { if (h.beds[n] > 0) h.beds[n]--; }); // hold the bed
     h.updatedAt = Date.now();
