@@ -4,6 +4,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { hospitals } from "./data/mock.js";
 import { rankHospitals } from "./services/ranking.js";
+import { startRequest, respond, requests } from "./services/hold.js";
 
 const app = express();
 app.use(cors());
@@ -46,6 +47,32 @@ app.post("/api/requests", (req, res) => {
     return res.status(400).json({ error: "lat and lng must be numbers" });
 
   res.json({ ranked: rankHospitals({ needs, lat, lng, schemePreferred }, hospitals) });
+});
+
+app.post("/api/requests/start", (req, res) => {
+  const { needs, lat, lng, schemePreferred = false } = req.body;
+  if (!Array.isArray(needs) || needs.length === 0)
+    return res.status(400).json({ error: "needs must be a non-empty array" });
+  const r = startRequest(io, { needs, lat, lng, schemePreferred });
+  res.json({ id: r.id, status: r.status, offer: r.offer });
+});
+
+app.get("/api/requests/:id", (req, res) => {
+  const r = requests.find((x) => x.id === Number(req.params.id));
+  if (!r) return res.status(404).json({ error: "Not found" });
+  res.json({ id: r.id, status: r.status, offer: r.offer });
+});
+
+app.post("/api/requests/:id/accept", (req, res) => {
+  const r = respond(io, Number(req.params.id), true);
+  if (!r) return res.status(400).json({ error: "No open offer" });
+  res.json({ id: r.id, status: r.status, offer: r.offer });
+});
+
+app.post("/api/requests/:id/reject", (req, res) => {
+  const r = respond(io, Number(req.params.id), false);
+  if (!r) return res.status(400).json({ error: "No open offer" });
+  res.json({ id: r.id, status: r.status, offer: r.offer });
 });
 
 server.listen(4000, () => console.log("BedLink API running on port 4000"));
