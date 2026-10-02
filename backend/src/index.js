@@ -3,6 +3,7 @@ import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import { hospitals } from "./data/mock.js";
+import { rankHospitals } from "./services/ranking.js";
 
 const app = express();
 app.use(cors());
@@ -35,6 +36,16 @@ app.post("/api/beds/update", (req, res) => {
   h.updatedAt = Date.now();
   io.emit("beds:changed", { hospitalId, bedType, count, updatedAt: h.updatedAt });
   res.json({ ok: true, hospital: h });
+});
+
+app.post("/api/requests", (req, res) => {
+  const { needs, lat, lng, schemePreferred = false } = req.body;
+  if (!Array.isArray(needs) || needs.length === 0)
+    return res.status(400).json({ error: "needs must be a non-empty array" });
+  if (typeof lat !== "number" || typeof lng !== "number")
+    return res.status(400).json({ error: "lat and lng must be numbers" });
+
+  res.json({ ranked: rankHospitals({ needs, lat, lng, schemePreferred }, hospitals) });
 });
 
 server.listen(4000, () => console.log("BedLink API running on port 4000"));
