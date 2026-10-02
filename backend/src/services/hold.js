@@ -2,7 +2,7 @@ import { hospitals } from "../data/mock.js";
 import { rankHospitals } from "./ranking.js";
 
 export const requests = [];
-const OFFER_SECONDS = 20; // change to 120 later
+const OFFER_SECONDS = 120; // change to 120 later
 
 export function startRequest(io, { needs, lat, lng, schemePreferred }) {
   const ranked = rankHospitals({ needs, lat, lng, schemePreferred }, hospitals);
