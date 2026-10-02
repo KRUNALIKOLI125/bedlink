@@ -4,7 +4,6 @@ import http from "http";
 import { Server } from "socket.io";
 import { hospitals } from "./data/mock.js";
 import { rankHospitals } from "./services/ranking.js";
-import { startRequest, respond, requests } from "./services/hold.js";
 import { resetDemo } from "./services/simulate.js";
 import { startRequest, respond, requests, markArrived } from "./services/hold.js";
 
