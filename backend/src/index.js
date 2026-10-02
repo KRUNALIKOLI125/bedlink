@@ -6,6 +6,7 @@ import { hospitals } from "./data/mock.js";
 import { rankHospitals } from "./services/ranking.js";
 import { startRequest, respond, requests } from "./services/hold.js";
 import { resetDemo } from "./services/simulate.js";
+import { startRequest, respond, requests, markArrived } from "./services/hold.js";
 
 const app = express();
 app.use(cors());
@@ -85,6 +86,21 @@ app.post("/api/simulate/request", (req, res) => {
   const needs = req.body?.needs || ["VENTILATOR"];
   const r = startRequest(io, { needs, lat: 19.07, lng: 72.87, schemePreferred: false });
   res.json({ id: r.id, status: r.status, offer: r.offer, ranked: r.ranked });
+});
+
+app.post("/api/requests/:id/arrived", (req, res) => {
+  const { bedReady } = req.body;
+  if (typeof bedReady !== "boolean")
+    return res.status(400).json({ error: "bedReady must be true or false" });
+
+  const result = markArrived(io, Number(req.params.id), bedReady);
+  if (!result) return res.status(400).json({ error: "Request must be HELD and not already completed" });
+
+  res.json({
+    status: result.request.status,
+    hospital: result.hospital.name,
+    newTrust: result.hospital.trust,
+  });
 });
 
 server.listen(4000, () => console.log("BedLink API running on port 4000"));

@@ -60,3 +60,19 @@ export function respond(io, requestId, accept) {
   }
   return request;
 }
+
+export function markArrived(io, requestId, bedReady) {
+  const request = requests.find((r) => r.id === requestId);
+  if (!request || request.status !== "HELD" || request.arrived) return null;
+
+  const h = hospitals.find((x) => x.id === request.offer.hospitalId);
+  if (bedReady) {
+    h.trust = Math.min(1, Math.round((h.trust + 0.05) * 100) / 100);
+  } else {
+    h.trust = Math.max(0, Math.round((h.trust - 0.2) * 100) / 100);
+  }
+  request.arrived = true;
+  request.status = "COMPLETED";
+  io.emit("request:status", { requestId: request.id, status: request.status });
+  return { request, hospital: h };
+}
