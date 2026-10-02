@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { hospitals } from "./data/mock.js";
 import { rankHospitals } from "./services/ranking.js";
 import { startRequest, respond, requests } from "./services/hold.js";
+import { resetDemo } from "./services/simulate.js";
 
 const app = express();
 app.use(cors());
@@ -73,6 +74,17 @@ app.post("/api/requests/:id/reject", (req, res) => {
   const r = respond(io, Number(req.params.id), false);
   if (!r) return res.status(400).json({ error: "No open offer" });
   res.json({ id: r.id, status: r.status, offer: r.offer });
+});
+
+app.post("/api/simulate/reset", (req, res) => {
+  resetDemo(io);
+  res.json({ ok: true });
+});
+
+app.post("/api/simulate/request", (req, res) => {
+  const needs = req.body?.needs || ["VENTILATOR"];
+  const r = startRequest(io, { needs, lat: 19.07, lng: 72.87, schemePreferred: false });
+  res.json({ id: r.id, status: r.status, offer: r.offer, ranked: r.ranked });
 });
 
 server.listen(4000, () => console.log("BedLink API running on port 4000"));
