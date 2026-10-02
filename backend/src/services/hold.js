@@ -7,7 +7,7 @@ const OFFER_SECONDS = 120; // change to 120 later
 export function startRequest(io, { needs, lat, lng, schemePreferred }) {
   const ranked = rankHospitals({ needs, lat, lng, schemePreferred }, hospitals);
   const request = {
-    id: requests.length + 1, needs, ranked,
+     id: requests.length + 1, needs, lat, lng, ranked,
     nextIndex: 0, status: "SEARCHING", offer: null, timer: null,
   };
   requests.push(request);
